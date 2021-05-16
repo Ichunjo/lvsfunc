@@ -16,7 +16,6 @@ import vsutil
 
 from .dehardsub import hardsub_mask
 from .progress import Progress, BarColumn, FPSColumn, TextColumn, TimeRemainingColumn
-from .render import clip_async_render
 from .util import get_prop
 
 core = vs.core
@@ -579,20 +578,16 @@ def diff(*clips: vs.VideoNode,
     else:
         diff = diff_func(a, b).std.PlaneStats()
         assert diff.format is not None
-        t = float if diff.format.sample_type == vs.FLOAT else int
+        t = float if diff.format.sample_type == vs.SampleType.FLOAT else int
         with progress:
-            task = progress.add_task("Diffing clips...", total=diff.num_frames)
-
-            def _cb(n: int, f: vs.VideoFrame) -> None:
-                progress.update(task, advance=1)
+            for i, f in progress.track(enumerate(diff.frames()),
+                                       description="Diffing clips...",
+                                       total=diff.num_frames):
                 if get_prop(f, 'PlaneStatsMin', t) <= thr or get_prop(f, 'PlaneStatsMax', t) >= 255 - thr > thr:
-                    frames.append(n)
-            clip_async_render(diff, callback=_cb)
+                    frames.append(i)
 
     if not frames:
         raise ValueError("diff: no differences found")
-
-    frames.sort()
 
     if clips:
         name_a, name_b = "Clip A", "Clip B"

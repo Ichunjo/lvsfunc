@@ -14,32 +14,15 @@ try:
 
 except (ImportError, ModuleNotFoundError):
     class Progress:  # type: ignore
-        description: str
-        i: int
-        total: int
-
         def __init__(self, *args: Any, **kwargs: Any) -> None:
-            self.i = 0
             pass
 
-        def _print(self) -> None:
-            print(f"{self.description} {self.i:d}/{self.total:d} frames", end="\r")
-
         def track(self, x: Collection[T], description: str = "", total: int = 0) -> Iterator[T]:
-            self.total = total
-            self.description = description
+            i = 0
             for y in x:
-                self.i += 1
-                self._print()
+                i += 1
+                print(f"{description} {i}/{total} frames", end="\r")
                 yield y
-
-        def update(self, *args: Any, advance: int = 0, **kwargs: Any) -> None:
-            self.i += advance
-            self._print()
-
-        def add_task(self, description: str, *args: Any, total: int = 0, **kwargs: Any) -> None:
-            self.description = description
-            self.total = total
 
         def __enter__(self) -> None:
             pass
